@@ -1,58 +1,34 @@
 package main
 
 import (
-	"context"
+	"crypto/rand"
 	"fmt"
-	"os/signal"
-	"sync"
-	"syscall"
+	"math/big"
+	"os"
+	"strconv"
 	"time"
 )
 
-// signal.NotifyContext оборачивает context.Background() и автоматически вызывает cancel(), если придёт Ctrl+C (SIGINT) или SIGTERM.
-
-// В writer и reader мы проверяем <-ctx.Done(). Как только сигнал получен, контекст закрывается → горутины завершаются.
-
-// sync.WaitGroup гарантирует, что main дождётся завершения всех ридеров.
-func writer(ctx context.Context) <-chan int {
-	ch := make(chan int)
-	go func() {
-		defer close(ch)
-		for i := range 1000 {
-			select {
-			case <-ctx.Done():
-				return
-			case ch <- i:
-				time.Sleep(2 * time.Second)
-			}
-		}
-	}()
-	return ch
-}
-
-func reader(ctx context.Context, ch <-chan int, wg *sync.WaitGroup) {
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case v, ok := <-ch:
-				if !ok {
-					return
-				}
-				fmt.Println(v)
-			}
-		}
-	}()
+func worker(id int, ch <-chan int) {
+	for num := range ch {
+		fmt.Printf("worker %d: %d\n", id, num)
+	}
 }
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	wg := &sync.WaitGroup{}
-	ch := writer(ctx)
-	reader(ctx, ch, wg)
-	wg.Wait()
+	n, err := strconv.Atoi(os.Args[1])
+	if err != nil || n <= 0 {
+		fmt.Println("no integer")
+		return
+	}
+
+	ch := make(chan int)
+	for i := 1; i <= n; i++ {
+		go worker(i, ch)
+	}
+	for {
+		num, _ := rand.Int(rand.Reader, big.NewInt(1000))
+		ch <- int(num.Int64())
+		time.Sleep(500 * time.Millisecond)
+	}
 }
