@@ -106,14 +106,10 @@ func closeChanel() {
 
 // 7. Завершение через time.Timer
 func timer() {
-	timer := time.NewTimer(5 * time.Second)
+	t := time.NewTimer(5 * time.Second)
 	go func() {
-		for {
-			select {
-			case <-timer.C:
-				fmt.Println("timer stop")
-			}
-		}
+		<-t.C
+		fmt.Println("timer stop")
 	}()
 	time.Sleep(7 * time.Second)
 }
