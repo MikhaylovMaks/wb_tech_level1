@@ -2,20 +2,19 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 func backWords(str string) string {
-	words := strings.Split(str, " ")
-	for i, j := 0, len(words)-1; i < j; i, j = i+1, j-1 {
-		words[i], words[j] = words[j], words[i]
+	runes := []rune(str)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
 	}
 
-	return strings.Join(words, " ")
+	return string(runes)
 }
 
 func main() {
-	input := "snow dog sun"
+	input := "главрыба 🐟"
 	fmt.Println("Исходная строка:", input)
 	fmt.Println("Перевёрнутая строка:", backWords(input))
 }
